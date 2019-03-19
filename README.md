@@ -12,4 +12,5 @@ to install the idp :
   
 
 * 20190318
-1 实现与CAS v5.3.7的oauth 2.0对接。
+
+1. 实现与CAS v5.3.7的oauth 2.0对接。

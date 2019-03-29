@@ -28,12 +28,14 @@ import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.models.KeycloakSession;
+import org.jboss.logging.Logger;
+
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
 public class OAuth2IdentityProvider extends AbstractOAuth2IdentityProvider {
-
+	protected static final Logger logger = Logger.getLogger(OAuth2IdentityProvider.class);
 	//public static final String AUTH_URL = "https://github.com/login/oauth/authorize";
 	//public static final String TOKEN_URL = "https://github.com/login/oauth/access_token";
 	public static final String PROFILE_URL = "https://www.cas-server.com:8443/cas/oauth2.0/profile";
@@ -69,13 +71,12 @@ public class OAuth2IdentityProvider extends AbstractOAuth2IdentityProvider {
 
 		String username = getJsonProperty(profile, "login");
                 
-                System.out.println(">>>>>username: " +username);
+                logger.info("extractFromProfile >>>>>username: " +username);
                 if(username == null || "".equals(username)){
                     username = getJsonProperty(profile, "id");
                 }
 		user.setUsername(username);
 		user.setName(getJsonProperty(profile, "name"));
-                //System.out.println(">>>>name: " + user.getName());
 
 		user.setEmail(getJsonProperty(profile, "email"));
 		user.setIdpConfig(getConfig());
@@ -91,9 +92,20 @@ public class OAuth2IdentityProvider extends AbstractOAuth2IdentityProvider {
 	@Override
 	protected BrokeredIdentityContext doGetFederatedIdentity(String accessToken) {
 		try {
-			JsonNode profile = SimpleHttp.doGet(this.getUserInfoUrl() /*PROFILE_URL*/, session).header("Authorization", "Bearer " + accessToken).asJson();
+                        logger.info("accessToken: "+accessToken);
+                        //to compatible to v3.5.1
+                        String profileUrl = this.getUserInfoUrl()+"?access_token="+accessToken;
 
-			BrokeredIdentityContext user = extractIdentityFromProfile(null, profile);
+                        logger.info("profileUrl: "+profileUrl);
+                        
+
+			//JsonNode profile = SimpleHttp.doGet(this.getUserInfoUrl() /*PROFILE_URL*/, session).header("Authorization", "Bearer " + accessToken).asJson();
+                       JsonNode profile = SimpleHttp.doGet(profileUrl, session).header("Authorization", "Bearer " + accessToken).asJson();
+
+			logger.info("profile json:"+profile);
+
+                        BrokeredIdentityContext user = extractIdentityFromProfile(null, profile);
+                        logger.info("context:"+user);
 
 			//if (user.getEmail() == null) {
 			//	user.setEmail(searchEmail(accessToken));
